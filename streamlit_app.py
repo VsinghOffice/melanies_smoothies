@@ -12,7 +12,7 @@ name_on_order = st.text_input("Name on Smoothie:")
 st.write("The name on the Smoothie will be:", name_on_order)
 
 # Get the active Snowflake session
-cnx = st.connection("SnowFlake")
+cnx = st.connection("Snowflake")
 session = cnx.session()
 
 # Fetching available fruit options from the database
