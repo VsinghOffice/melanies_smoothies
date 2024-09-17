@@ -84,43 +84,41 @@ def get_fruit_data(fruit_name):
         st.error(f"Error fetching or processing fruit data: {e}")
         return {}
 
-def create_nutrient_df(fruit_data):
+def create_nutrient_table(fruit_data):
     try:
         # Extract fruit info
         name = fruit_data.get('name', 'Unknown')
         id_ = fruit_data.get('id', 'N/A')
         family = fruit_data.get('family', 'N/A')
-        order = fruit_data.get('order', 'N/A')
         genus = fruit_data.get('genus', 'N/A')
         nutrients = fruit_data.get('nutritions', {})
 
         # Create a DataFrame with the specified format
         data = {
-            'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
+            'Metric': ['Calories', 'Fat', 'Sugar', 'Carbohydrates', 'Protein'],
             'Value': [
                 nutrients.get('calories', 'N/A'),
                 nutrients.get('fat', 'N/A'),
                 nutrients.get('sugar', 'N/A'),
-                nutrients.get('protein', 'N/A'),
                 nutrients.get('carbohydrates', 'N/A'),
-                nutrients.get('fiber', 'N/A')
+                nutrients.get('protein', 'N/A')
             ]
         }
-        df_nutrients = pd.DataFrame(data)
+        df_nutrients = pd.DataFrame(data).set_index('Metric').T
+
+        # Add fruit information to the table
+        df_nutrients['Name'] = name
+        df_nutrients['ID'] = id_
+        df_nutrients['Family'] = family
+        df_nutrients['Genus'] = genus
         
-        # Create a DataFrame with the fruit information
-        df_fruit_info = pd.DataFrame({
-            'Name': [name],
-            'ID': [id_],
-            'Family': [family],
-            'Order': [order],
-            'Genus': [genus]
-        })
+        # Reorder the columns
+        df_nutrients = df_nutrients[['Name', 'ID', 'Family', 'Genus', 'Calories', 'Fat', 'Sugar', 'Carbohydrates', 'Protein']]
         
-        return df_fruit_info, df_nutrients
+        return df_nutrients
     except Exception as e:
         st.error(f"Error creating nutrient DataFrame: {e}")
-        return pd.DataFrame(), pd.DataFrame()
+        return pd.DataFrame()
 
 if ingredients_list and max_selection(ingredients_list):
     ingredients_string = ' '.join(ingredients_list)
@@ -140,18 +138,11 @@ if ingredients_list and max_selection(ingredients_list):
             for ingredient in ingredients_list:
                 fruit_data = get_fruit_data(ingredient)
                 if fruit_data:
-                    df_fruit_info, df_nutrients = create_nutrient_df(fruit_data)
+                    df_nutrients = create_nutrient_table(fruit_data)
                     
-                    # Displaying the fruit information
+                    # Display the fruit nutrient table
                     st.write(f"{fruit_data.get('name')} Nutrition Information")
-                    
-                    # Display fruit info
-                    st.write("Fruit Information:")
-                    st.dataframe(df_fruit_info, use_container_width=True)
-                    
-                    # Display nutrients
-                    st.write("Nutritional Information:")
-                    st.dataframe(df_nutrients.set_index('Metric').T, use_container_width=True)
+                    st.dataframe(df_nutrients, use_container_width=True)
 
         except Exception as e:
             st.error(f"Error executing query: {e}")
