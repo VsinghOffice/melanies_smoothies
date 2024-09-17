@@ -106,24 +106,38 @@ def format_nutrient_data(fruit_data):
 
 def create_nutrient_df(fruit_data):
     try:
+        # Create DataFrame with nutrients as rows
         name = fruit_data.get('name', 'Unknown')
+        id_ = fruit_data.get('id', 'N/A')
+        family = fruit_data.get('family', 'N/A')
+        order = fruit_data.get('order', 'N/A')
+        genus = fruit_data.get('genus', 'N/A')
         nutrients = fruit_data.get('nutrients', {})
-        
-        # Create DataFrame with nutrient types as rows
-        data = {
-            'Nutrient': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
+
+        # Nutrients and their values
+        nutrient_data = {
+            'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
             'Value': [
-                nutrients.get('calories'),
-                nutrients.get('fat'),
-                nutrients.get('sugar'),
-                nutrients.get('protein'),
-                nutrients.get('carbohydrates'),
-                nutrients.get('fiber')
+                nutrients.get('calories', 'N/A'),
+                nutrients.get('fat', 'N/A'),
+                nutrients.get('sugar', 'N/A'),
+                nutrients.get('protein', 'N/A'),
+                nutrients.get('carbohydrates', 'N/A'),
+                nutrients.get('fiber', 'N/A')
             ]
         }
         
-        df = pd.DataFrame(data)
-        return df
+        df_nutrients = pd.DataFrame(nutrient_data)
+        # Adding fruit information to the DataFrame
+        df_nutrients.loc[-1] = ['Name', name]  # Adding a row at the top
+        df_nutrients.loc[-1] = ['ID', id_]
+        df_nutrients.loc[-1] = ['Family', family]
+        df_nutrients.loc[-1] = ['Order', order]
+        df_nutrients.loc[-1] = ['Genus', genus]
+        df_nutrients.index = df_nutrients.index + 1  # Shifting index
+        df_nutrients = df_nutrients.sort_index()  # Sorting index
+        
+        return df_nutrients
     except Exception as e:
         st.error(f"Error creating nutrient DataFrame: {e}")
         return pd.DataFrame()
