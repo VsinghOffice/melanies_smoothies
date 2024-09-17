@@ -12,16 +12,10 @@ st.write("Choose the Fruits You want in your Smoothie!")
 name_on_order = st.text_input("Name on Smoothie:")
 st.write("The name on the Smoothie will be:", name_on_order)
 
-# Display the secrets to ensure they are loaded correctly
-st.write("Secrets configuration:")
-st.write(st.secrets)
-
 # Load Snowflake secrets
 try:
     snowflake_secrets = st.secrets["connections"]["snowflake"]
-    st.write("Snowflake secrets loaded:")
-    st.write(snowflake_secrets)
-    
+
     # Ensure all required keys are present
     required_keys = ["account", "user", "password", "role", "warehouse", "database", "schema", "client_session_keep_alive"]
     for key in required_keys:
@@ -78,16 +72,14 @@ if ingredients_list:
 else:
     st.write("Please select up to 5 ingredients for your smoothie.")
 
-def get_repeated_fruit_data(num_repeats):
+def get_fruit_data(fruit_name):
     try:
-        fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
+        fruityvice_response = requests.get(f"https://fruityvice.com/api/fruit/{fruit_name.lower()}")
         fruit_data = fruityvice_response.json()
-        repeated_data = [fruit_data] * num_repeats
-        df = pd.DataFrame(repeated_data)
-        return df
+        return fruit_data
     except Exception as e:
         st.error(f"Error fetching or processing fruit data: {e}")
-        return pd.DataFrame()
+        return {}
 
 if ingredients_list and max_selection(ingredients_list):
     ingredients_string = ' '.join(ingredients_list)
@@ -103,9 +95,13 @@ if ingredients_list and max_selection(ingredients_list):
             st.write("SQL Query executed:")
             st.write(my_insert_stmt)
             
-            num_ingredients = len(ingredients_list)
-            df_repeated = get_repeated_fruit_data(num_ingredients)
-            st.dataframe(data=df_repeated, use_container_width=True)
+            # Fetch and display fruit data for each selected ingredient
+            for ingredient in ingredients_list:
+                fruit_data = get_fruit_data(ingredient)
+                if fruit_data:
+                    df_fruit = pd.DataFrame([fruit_data])
+                    st.write(f"Details for {ingredient}:")
+                    st.dataframe(data=df_fruit, use_container_width=True)
         except Exception as e:
             st.error(f"Error executing query: {e}")
         st.stop()
