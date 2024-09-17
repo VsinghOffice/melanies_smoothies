@@ -1,7 +1,7 @@
 import streamlit as st
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
-import pandas as pd  # Import pandas
+import pandas as pd
 import requests
 
 # Streamlit App title
@@ -47,13 +47,11 @@ except Exception as e:
 
 # Fetching available fruit options from the database
 try:
-    # Fetching fruit options including the new SEARCH_ON column
-    my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'), col('SEARCH_ON')).collect()
-
-    # Convert Snowflake data to Pandas DataFrame
-    pd_df = pd.DataFrame([row.as_dict() for row in my_dataframe])  # Converts Snowflake data to Pandas DataFrame
-    fruit_options = pd_df['FRUIT_NAME'].tolist()  # Get list of fruit names
-
+    my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME')).collect()
+    fruit_options = [row['FRUIT_NAME'] for row in my_dataframe]
+    
+    # Convert to Pandas dataframe
+    pd_df = pd.DataFrame([row.as_dict() for row in my_dataframe])
 except Exception as e:
     st.error(f"Error fetching data: {e}")
     st.stop()
@@ -77,18 +75,60 @@ if ingredients_list:
 else:
     st.write("Please select up to 5 ingredients for your smoothie.")
 
-# Fetch the SEARCH_ON value for the selected fruit
-for fruit_chosen in ingredients_list:
-    search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
-    st.write(f"The search value for {fruit_chosen} is {search_on}.")
+def get_fruit_data(fruit_name):
+    try:
+        response = requests.get(f"https://fruityvice.com/api/fruit/{fruit_name.lower()}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Failed to fetch data for {fruit_name}. Status code: {response.status_code}")
+            return {}
+    except Exception as e:
+        st.error(f"Error fetching or processing fruit data: {e}")
+        return {}
 
-# Submit button for order
+def create_nutrient_df(fruit_data):
+    try:
+        # Extract fruit info
+        name = fruit_data.get('name', 'Unknown')
+        id_ = fruit_data.get('id', 'N/A')
+        family = fruit_data.get('family', 'N/A')
+        genus = fruit_data.get('genus', 'N/A')
+        nutrients = fruit_data.get('nutritions', {})
+
+        # Create a DataFrame with fruit info and nutrients
+        df_fruit_info = pd.DataFrame({
+            'Name': [name],
+            'ID': [id_],
+            'Family': [family],
+            'Genus': [genus]
+        })
+
+        df_nutrients = pd.DataFrame({
+            'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates'],
+            'Value': [
+                nutrients.get('calories', 'N/A'),
+                nutrients.get('fat', 'N/A'),
+                nutrients.get('sugar', 'N/A'),
+                nutrients.get('protein', 'N/A'),
+                nutrients.get('carbohydrates', 'N/A')
+            ]
+        })
+        
+        return df_fruit_info, df_nutrients
+    except Exception as e:
+        st.error(f"Error creating nutrient DataFrame: {e}")
+        return pd.DataFrame(), pd.DataFrame()
+
+# Add column SEARCH_ON in DataFrame
+if "SEARCH_ON" not in pd_df.columns:
+    pd_df["SEARCH_ON"] = pd_df["FRUIT_NAME"]
+
+# For selected fruits
 if ingredients_list and max_selection(ingredients_list):
     ingredients_string = ', '.join(ingredients_list)
-    my_insert_stmt = f"""
-    INSERT INTO smoothies.public.orders(name_on_order, ingredients)
-    VALUES ('{name_on_order}', '{ingredients_string}')
-    """
+    my_insert_stmt = f"""INSERT INTO smoothies.public.orders(name_on_order, ingredients, STATUS)
+                         VALUES ('{name_on_order}', '{ingredients_string}', 'UNFILLED')"""
 
     submitted = st.button('Submit Order')
     
@@ -99,44 +139,24 @@ if ingredients_list and max_selection(ingredients_list):
             st.write("SQL Query executed:")
             st.write(my_insert_stmt)
             
-            # Fetch and format nutrient data for each selected fruit (optional, assuming we have an API)
+            # Fetch and format nutrient data for each selected fruit
             for ingredient in ingredients_list:
-                fruit_data = get_fruit_data(ingredient)  # Optional API call
+                search_on = pd_df.loc[pd_df['FRUIT_NAME'] == ingredient, 'SEARCH_ON'].iloc[0]
+                st.write(f"The search value for {ingredient} is {search_on}.")
+                fruit_data = get_fruit_data(search_on)
                 if fruit_data:
-                    df_fruit_info, df_nutrients = create_nutrient_df(fruit_data)  # Assuming API integration
+                    df_fruit_info, df_nutrients = create_nutrient_df(fruit_data)
                     
                     # Displaying the fruit information
                     st.write(f"{fruit_data.get('name')} Nutrition Information")
                     
                     # Display fruit info
-                    st.write("Fruit Information:")
                     st.dataframe(df_fruit_info, use_container_width=True)
                     
-                    # Display nutrients
+                    # Display nutrients in formatted table
                     st.write("Nutritional Information:")
                     st.dataframe(df_nutrients.set_index('Metric').T, use_container_width=True)
 
         except Exception as e:
             st.error(f"Error executing query: {e}")
         st.stop()
-
-# Function to create orders (for DORA check)
-def create_order(name, fruits, filled=False):
-    ingredients_string = ', '.join(fruits)
-    fill_status = 'FILLED' if filled else 'UNFILLED'
-    
-    insert_stmt = f"""
-    INSERT INTO smoothies.public.orders(name_on_order, ingredients, status)
-    VALUES ('{name}', '{ingredients_string}', '{fill_status}')
-    """
-    
-    try:
-        session.sql(insert_stmt).collect()
-        st.success(f"Order created for {name} with fruits: {ingredients_string}. Status: {fill_status}", icon="✅")
-    except Exception as e:
-        st.error(f"Error executing query: {e}")
-
-# Orders for DORA Check
-create_order("Kevin", ["Apples", "Lime", "Ximenia"])  # Kevin's order, not filled
-create_order("Divya", ["Dragon Fruit", "Guava", "Figs", "Jackfruit", "Blueberries"], filled=True)  # Divya's order, filled
-create_order("Xi", ["Vanilla Fruit", "Nectarine"], filled=True)  # Xi's order, filled
