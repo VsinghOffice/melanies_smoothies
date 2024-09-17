@@ -75,8 +75,12 @@ else:
 def get_fruit_data(fruit_name):
     try:
         response = requests.get(f"https://fruityvice.com/api/fruit/{fruit_name.lower()}")
-        fruit_data = response.json()
-        return fruit_data
+        if response.status_code == 200:
+            fruit_data = response.json()
+            return fruit_data
+        else:
+            st.error(f"Failed to fetch data for {fruit_name}. Status code: {response.status_code}")
+            return {}
     except Exception as e:
         st.error(f"Error fetching or processing fruit data: {e}")
         return {}
@@ -105,21 +109,6 @@ def create_nutrient_df(fruit_data):
         }
         df_nutrients = pd.DataFrame(data)
         
-        # Append fruit info
-        fruit_info = {
-            'Metric': ['Name', 'ID', 'Family', 'Order', 'Genus'],
-            'Value': [name, id_, family, order, genus]
-        }
-        df_info = pd.DataFrame(fruit_info)
-        
-        # Combine info and nutrients
-        df_combined = pd.concat([df_info, df_nutrients])
-
-        # Pivot the DataFrame to have columns as attributes and rows as nutrients
-        df_pivot = df_combined.pivot(index='Metric', columns=None, values='Value')
-        df_pivot = df_pivot.reset_index()
-        df_pivot.columns = ['Metric', 'Value']
-        
         # Create a DataFrame with the required format
         df_final = pd.DataFrame({
             'Name': [name],
@@ -135,6 +124,9 @@ def create_nutrient_df(fruit_data):
             'Fiber': [nutrients.get('fiber', 'N/A')]
         })
         
+        # Set proper column order
+        df_final = df_final[['Name', 'ID', 'Family', 'Order', 'Genus', 'Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber']]
+        
         return df_final
     except Exception as e:
         st.error(f"Error creating nutrient DataFrame: {e}")
@@ -143,27 +135,4 @@ def create_nutrient_df(fruit_data):
 if ingredients_list and max_selection(ingredients_list):
     ingredients_string = ' '.join(ingredients_list)
     my_insert_stmt = f"""INSERT INTO smoothies.public.orders(name_on_order, ingredients)
-                         VALUES ('{name_on_order}', '{ingredients_string}')"""
-
-    submitted = st.button('Submit Order')
-    
-    if submitted:
-        try:
-            session.sql(my_insert_stmt).collect()
-            st.success('Your Smoothie is ordered!', icon="✅")
-            st.write("SQL Query executed:")
-            st.write(my_insert_stmt)
-            
-            # Fetch and format nutrient data for each selected fruit
-            for ingredient in ingredients_list:
-                fruit_data = get_fruit_data(ingredient)
-                if fruit_data:
-                    df_nutrients = create_nutrient_df(fruit_data)
-                    
-                    # Displaying the nutrient information for each fruit
-                    st.write(f"{fruit_data.get('name')} Nutrition Information")
-                    st.dataframe(df_nutrients, use_container_width=True)
-
-        except Exception as e:
-            st.error(f"Error executing query: {e}")
-        st.stop()
+                         VALUES ('{name_on_orde
