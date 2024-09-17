@@ -135,4 +135,27 @@ def create_nutrient_df(fruit_data):
 if ingredients_list and max_selection(ingredients_list):
     ingredients_string = ' '.join(ingredients_list)
     my_insert_stmt = f"""INSERT INTO smoothies.public.orders(name_on_order, ingredients)
-                         VALUES ('{name_on_orde
+                         VALUES ('{name_on_order}', '{ingredients_string}')"""
+
+    submitted = st.button('Submit Order')
+    
+    if submitted:
+        try:
+            session.sql(my_insert_stmt).collect()
+            st.success('Your Smoothie is ordered!', icon="✅")
+            st.write("SQL Query executed:")
+            st.write(my_insert_stmt)
+            
+            # Fetch and format nutrient data for each selected fruit
+            for ingredient in ingredients_list:
+                fruit_data = get_fruit_data(ingredient)
+                if fruit_data:
+                    df_nutrients = create_nutrient_df(fruit_data)
+                    
+                    # Displaying the nutrient information for each fruit
+                    st.write(f"{fruit_data.get('name')} Nutrition Information")
+                    st.dataframe(df_nutrients, use_container_width=True)
+
+        except Exception as e:
+            st.error(f"Error executing query: {e}")
+        st.stop()
