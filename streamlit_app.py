@@ -3,6 +3,7 @@ import pandas as pd
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
 import hashlib
+import requests  # Add this to avoid the 'requests not defined' error
 
 def hash_ingredients(ingredients):
     return int(hashlib.sha256(ingredients.encode('utf-8')).hexdigest(), 16)
