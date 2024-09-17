@@ -81,15 +81,25 @@ def get_fruit_data(fruit_name):
         st.error(f"Error fetching or processing fruit data: {e}")
         return {}
 
-def get_nutrient_data(fruit_name):
+def format_nutrient_data(fruit_data):
     try:
-        fruit_data = get_fruit_data(fruit_name)
-        if fruit_data and 'nutritions' in fruit_data:
-            return fruit_data['nutritions']
-        else:
-            return {}
+        nutrients = fruit_data.get('nutritions', {})
+        formatted_data = {
+            'name': fruit_data.get('name'),
+            'id': fruit_data.get('id'),
+            'family': fruit_data.get('family'),
+            'order': fruit_data.get('order'),
+            'genus': fruit_data.get('genus'),
+            'calories': nutrients.get('calories'),
+            'fat': nutrients.get('fat'),
+            'sugar': nutrients.get('sugar'),
+            'protein': nutrients.get('protein'),
+            'carbohydrates': nutrients.get('carbohydrates'),
+            'fiber': nutrients.get('fiber')
+        }
+        return formatted_data
     except Exception as e:
-        st.error(f"Error fetching nutrient data: {e}")
+        st.error(f"Error formatting nutrient data: {e}")
         return {}
 
 if ingredients_list and max_selection(ingredients_list):
@@ -106,13 +116,13 @@ if ingredients_list and max_selection(ingredients_list):
             st.write("SQL Query executed:")
             st.write(my_insert_stmt)
             
-            # Fetch and display nutrient data for each selected fruit
+            # Fetch and format nutrient data for each selected fruit
             nutrient_data_list = []
             for ingredient in ingredients_list:
-                nutrient_data = get_nutrient_data(ingredient)
-                if nutrient_data:
-                    nutrient_data['Fruit'] = ingredient  # Add fruit name for identification
-                    nutrient_data_list.append(nutrient_data)
+                fruit_data = get_fruit_data(ingredient)
+                if fruit_data:
+                    formatted_data = format_nutrient_data(fruit_data)
+                    nutrient_data_list.append(formatted_data)
 
             # Convert list of nutrient data to DataFrame
             if nutrient_data_list:
