@@ -102,6 +102,26 @@ def format_nutrient_data(fruit_data):
         st.error(f"Error formatting nutrient data: {e}")
         return {}
 
+def transform_nutrient_data(nutrient_data_list):
+    try:
+        # Transform data into a DataFrame where each row is a nutrient type
+        rows = []
+        for data in nutrient_data_list:
+            fruit_name = data.get('name', 'Unknown')
+            for nutrient, value in data.items():
+                if nutrient not in ['name', 'id', 'family', 'order', 'genus']:
+                    rows.append({
+                        'Fruit': fruit_name,
+                        'Nutrient': nutrient.capitalize(),
+                        'Value': value
+                    })
+        
+        df_nutrients = pd.DataFrame(rows)
+        return df_nutrients
+    except Exception as e:
+        st.error(f"Error transforming nutrient data: {e}")
+        return pd.DataFrame()
+
 if ingredients_list and max_selection(ingredients_list):
     ingredients_string = ' '.join(ingredients_list)
     my_insert_stmt = f"""INSERT INTO smoothies.public.orders(name_on_order, ingredients)
@@ -124,15 +144,15 @@ if ingredients_list and max_selection(ingredients_list):
                     formatted_data = format_nutrient_data(fruit_data)
                     nutrient_data_list.append(formatted_data)
 
-            # Convert list of nutrient data to DataFrame
-            if nutrient_data_list:
-                df_nutrients = pd.DataFrame(nutrient_data_list)
-                st.write("Nutrient Information for Selected Fruits:")
-                st.dataframe(data=df_nutrients, use_container_width=True)
+            # Transform and display nutrient data
+            df_nutrients = transform_nutrient_data(nutrient_data_list)
+            st.write("Nutrient Information for Selected Fruits:")
+            st.dataframe(data=df_nutrients, use_container_width=True)
 
         except Exception as e:
             st.error(f"Error executing query: {e}")
         st.stop()
+
 
 
 # import streamlit as st
