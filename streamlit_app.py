@@ -16,13 +16,13 @@ st.write("The name on the Smoothie will be:", name_on_order)
 st.write("Secrets configuration:")
 st.write(st.secrets)
 
-# Create a Snowflake session using Streamlit secrets
+# Load Snowflake secrets
 try:
-    snowflake_secrets = st.secrets.get("connections.snowflake", {})
+    snowflake_secrets = st.secrets["connections"]["snowflake"]
     st.write("Snowflake secrets loaded:")
     st.write(snowflake_secrets)
-
-    # Check if all necessary keys are present
+    
+    # Ensure all required keys are present
     required_keys = ["account", "user", "password", "role", "warehouse", "database", "schema", "client_session_keep_alive"]
     for key in required_keys:
         if key not in snowflake_secrets:
@@ -40,9 +40,9 @@ try:
         "schema": snowflake_secrets["schema"],
         "client_session_keep_alive": snowflake_secrets.get("client_session_keep_alive", True)
     }).create()
-    
+
 except KeyError as e:
-    st.error(f"Connection error: {e}")
+    st.error(f"Connection error: Missing secret key: {e}")
     st.stop()
 except AttributeError as e:
     st.error(f"Attribute error: {e}")
