@@ -2,9 +2,7 @@
 import streamlit as st
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
-import requests
-fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
-st.text(fruityvice_response)
+
 # Streamlit App title
 st.title("My Parents New Healthy Diner")
 st.write("Choose the Fruits You want in your Smoothie!")
@@ -72,6 +70,8 @@ if ingredients_list and max_selection(ingredients_list):
         except Exception as e:
             st.error(f"Error executing query: {e}")
         st.stop()
-
+import requests
+fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
+st.text(fruityvice_response)
 
 
