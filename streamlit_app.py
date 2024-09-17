@@ -1,6 +1,6 @@
 # Import python packages
 import streamlit as st
-
+from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
 
 # Streamlit App title
@@ -11,15 +11,23 @@ st.write("Choose the Fruits You want in your Smoothie!")
 name_on_order = st.text_input("Name on Smoothie:")
 st.write("The name on the Smoothie will be:", name_on_order)
 
-# Get the active Snowflake session
-cnx = st.connection("Snowflake")
-session = cnx.session()
+# Get the Snowflake connection
+try:
+    cnx = st.connection("Snowflake")
+    # Create a Snowflake session using Streamlit's connection
+    session = cnx.session()
+except KeyError as e:
+    st.error(f"Connection error: {e}")
+    st.stop()
 
 # Fetching available fruit options from the database
-my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME')).collect()
-
-# List of fruit options
-fruit_options = [row['FRUIT_NAME'] for row in my_dataframe]
+try:
+    my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME')).collect()
+    # List of fruit options
+    fruit_options = [row['FRUIT_NAME'] for row in my_dataframe]
+except Exception as e:
+    st.error(f"Error fetching data: {e}")
+    st.stop()
 
 # Multiselect for ingredients
 ingredients_list = st.multiselect(
@@ -53,8 +61,12 @@ if ingredients_list and max_selection(ingredients_list):
     submitted = st.button('Submit Order')
     
     if submitted:
-        # Simulate inserting into the database
-        st.success('Your Smoothie is ordered!', icon="✅")
-        st.write("SQL Query to be executed:")
-        st.write(my_insert_stmt)
+        try:
+            # Execute the SQL query to insert the order
+            session.sql(my_insert_stmt).collect()
+            st.success('Your Smoothie is ordered!', icon="✅")
+            st.write("SQL Query executed:")
+            st.write(my_insert_stmt)
+        except Exception as e:
+            st.error(f"Error executing query: {e}")
         st.stop()
