@@ -96,7 +96,7 @@ def format_nutrient_data(fruit_data):
                 'sugar': nutrients.get('sugar'),
                 'protein': nutrients.get('protein'),
                 'carbohydrates': nutrients.get('carbohydrates'),
-                'fiber': nutrients.get('fiber')
+               
             }
         }
         return formatted_data
@@ -116,14 +116,14 @@ def create_nutrient_df(fruit_data):
 
         # Nutrients and their values
         nutrient_data = {
-            'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
+            'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates'],
             'Value': [
                 nutrients.get('calories', 'N/A'),
                 nutrients.get('fat', 'N/A'),
                 nutrients.get('sugar', 'N/A'),
                 nutrients.get('protein', 'N/A'),
                 nutrients.get('carbohydrates', 'N/A'),
-                nutrients.get('fiber', 'N/A')
+              
             ]
         }
         
