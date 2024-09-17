@@ -81,29 +81,6 @@ def get_fruit_data(fruit_name):
         st.error(f"Error fetching or processing fruit data: {e}")
         return {}
 
-def format_nutrient_data(fruit_data):
-    try:
-        nutrients = fruit_data.get('nutritions', {})
-        formatted_data = {
-            'name': fruit_data.get('name'),
-            'id': fruit_data.get('id'),
-            'family': fruit_data.get('family'),
-            'order': fruit_data.get('order'),
-            'genus': fruit_data.get('genus'),
-            'nutrients': {
-                'calories': nutrients.get('calories'),
-                'fat': nutrients.get('fat'),
-                'sugar': nutrients.get('sugar'),
-                'protein': nutrients.get('protein'),
-                'carbohydrates': nutrients.get('carbohydrates'),
-                'fiber': nutrients.get('fiber')
-            }
-        }
-        return formatted_data
-    except Exception as e:
-        st.error(f"Error formatting nutrient data: {e}")
-        return {}
-
 def create_nutrient_df(fruit_data):
     try:
         # Extract fruit info
@@ -112,35 +89,25 @@ def create_nutrient_df(fruit_data):
         family = fruit_data.get('family', 'N/A')
         order = fruit_data.get('order', 'N/A')
         genus = fruit_data.get('genus', 'N/A')
-        nutrients = fruit_data.get('nutrients', {})
+        nutrients = fruit_data.get('nutritions', {})
 
-        # Create DataFrame with the specified format
+        # Create DataFrame in the specified format
         data = {
-            'Nutrient': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
-            'Value': [
-                nutrients.get('calories', 'N/A'),
-                nutrients.get('fat', 'N/A'),
-                nutrients.get('sugar', 'N/A'),
-                nutrients.get('protein', 'N/A'),
-                nutrients.get('carbohydrates', 'N/A'),
-                nutrients.get('fiber', 'N/A')
-            ]
+            'name': [name],
+            'id': [id_],
+            'family': [family],
+            'order': [order],
+            'genus': [genus],
+            'calories': [nutrients.get('calories', 'N/A')],
+            'fat': [nutrients.get('fat', 'N/A')],
+            'sugar': [nutrients.get('sugar', 'N/A')],
+            'protein': [nutrients.get('protein', 'N/A')],
+            'carbohydrates': [nutrients.get('carbohydrates', 'N/A')],
+            'fiber': [nutrients.get('fiber', 'N/A')]
         }
 
         df_nutrients = pd.DataFrame(data)
-        df_nutrients.index.name = 'Metric'
-        
-        # Adding fruit-specific information
-        df_info = pd.DataFrame({
-            'Metric': ['Name', 'ID', 'Family', 'Order', 'Genus'],
-            'Value': [name, id_, family, order, genus]
-        })
-        df_info.index = [''] * len(df_info)  # Clear index to align with nutrient info
-
-        # Concatenate fruit info and nutrients
-        df_combined = pd.concat([df_info, df_nutrients])
-
-        return df_combined
+        return df_nutrients
     except Exception as e:
         st.error(f"Error creating nutrient DataFrame: {e}")
         return pd.DataFrame()
@@ -163,11 +130,10 @@ if ingredients_list and max_selection(ingredients_list):
             for ingredient in ingredients_list:
                 fruit_data = get_fruit_data(ingredient)
                 if fruit_data:
-                    formatted_data = format_nutrient_data(fruit_data)
-                    df_nutrients = create_nutrient_df(formatted_data)
+                    df_nutrients = create_nutrient_df(fruit_data)
                     
                     # Displaying the nutrient information for each fruit
-                    st.write(f"{formatted_data.get('name')} Nutrition Information")
+                    st.write(f"{fruit_data.get('name')} Nutrition Information")
                     st.dataframe(df_nutrients, use_container_width=True)
 
         except Exception as e:
