@@ -1,4 +1,4 @@
-# Import python packages
+# Import required packages
 import streamlit as st
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
@@ -13,7 +13,7 @@ st.write("The name on the Smoothie will be:", name_on_order)
 
 # Get the Snowflake connection
 try:
-    cnx = st.connection("Snowflake")
+    cnx = st.connection("snowflake")  # Ensure connection name is lowercase
     # Create a Snowflake session using Streamlit's connection
     session = cnx.session()
 except KeyError as e:
