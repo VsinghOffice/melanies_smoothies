@@ -96,7 +96,7 @@ def format_nutrient_data(fruit_data):
                 'sugar': nutrients.get('sugar'),
                 'protein': nutrients.get('protein'),
                 'carbohydrates': nutrients.get('carbohydrates'),
-               
+                'fiber': nutrients.get('fiber')
             }
         }
         return formatted_data
@@ -106,7 +106,7 @@ def format_nutrient_data(fruit_data):
 
 def create_nutrient_df(fruit_data):
     try:
-        # Create DataFrame with nutrients as rows
+        # Extract fruit info
         name = fruit_data.get('name', 'Unknown')
         id_ = fruit_data.get('id', 'N/A')
         family = fruit_data.get('family', 'N/A')
@@ -114,30 +114,33 @@ def create_nutrient_df(fruit_data):
         genus = fruit_data.get('genus', 'N/A')
         nutrients = fruit_data.get('nutrients', {})
 
-        # Nutrients and their values
-        nutrient_data = {
-            'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates'],
+        # Create DataFrame with the specified format
+        data = {
+            'Nutrient': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
             'Value': [
                 nutrients.get('calories', 'N/A'),
                 nutrients.get('fat', 'N/A'),
                 nutrients.get('sugar', 'N/A'),
                 nutrients.get('protein', 'N/A'),
                 nutrients.get('carbohydrates', 'N/A'),
-              
+                nutrients.get('fiber', 'N/A')
             ]
         }
+
+        df_nutrients = pd.DataFrame(data)
+        df_nutrients.index.name = 'Metric'
         
-        df_nutrients = pd.DataFrame(nutrient_data)
-        # Adding fruit information to the DataFrame
-        df_nutrients.loc[-1] = ['Name', name]  # Adding a row at the top
-        df_nutrients.loc[-1] = ['ID', id_]
-        df_nutrients.loc[-1] = ['Family', family]
-        df_nutrients.loc[-1] = ['Order', order]
-        df_nutrients.loc[-1] = ['Genus', genus]
-        df_nutrients.index = df_nutrients.index + 1  # Shifting index
-        df_nutrients = df_nutrients.sort_index()  # Sorting index
-        
-        return df_nutrients
+        # Adding fruit-specific information
+        df_info = pd.DataFrame({
+            'Metric': ['Name', 'ID', 'Family', 'Order', 'Genus'],
+            'Value': [name, id_, family, order, genus]
+        })
+        df_info.index = [''] * len(df_info)  # Clear index to align with nutrient info
+
+        # Concatenate fruit info and nutrients
+        df_combined = pd.concat([df_info, df_nutrients])
+
+        return df_combined
     except Exception as e:
         st.error(f"Error creating nutrient DataFrame: {e}")
         return pd.DataFrame()
