@@ -90,36 +90,42 @@ def format_nutrient_data(fruit_data):
             'family': fruit_data.get('family'),
             'order': fruit_data.get('order'),
             'genus': fruit_data.get('genus'),
-            'calories': nutrients.get('calories'),
-            'fat': nutrients.get('fat'),
-            'sugar': nutrients.get('sugar'),
-            'protein': nutrients.get('protein'),
-            'carbohydrates': nutrients.get('carbohydrates'),
-            'fiber': nutrients.get('fiber')
+            'nutrients': {
+                'calories': nutrients.get('calories'),
+                'fat': nutrients.get('fat'),
+                'sugar': nutrients.get('sugar'),
+                'protein': nutrients.get('protein'),
+                'carbohydrates': nutrients.get('carbohydrates'),
+                'fiber': nutrients.get('fiber')
+            }
         }
         return formatted_data
     except Exception as e:
         st.error(f"Error formatting nutrient data: {e}")
         return {}
 
-def transform_nutrient_data(nutrient_data_list):
+def create_nutrient_df(fruit_data):
     try:
-        # Transform data into a DataFrame where each row is a nutrient type
-        rows = []
-        for data in nutrient_data_list:
-            fruit_name = data.get('name', 'Unknown')
-            for nutrient, value in data.items():
-                if nutrient not in ['name', 'id', 'family', 'order', 'genus']:
-                    rows.append({
-                        'Fruit': fruit_name,
-                        'Nutrient': nutrient.capitalize(),
-                        'Value': value
-                    })
+        name = fruit_data.get('name', 'Unknown')
+        nutrients = fruit_data.get('nutrients', {})
         
-        df_nutrients = pd.DataFrame(rows)
-        return df_nutrients
+        # Create DataFrame with nutrient types as rows
+        data = {
+            'Nutrient': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
+            'Value': [
+                nutrients.get('calories'),
+                nutrients.get('fat'),
+                nutrients.get('sugar'),
+                nutrients.get('protein'),
+                nutrients.get('carbohydrates'),
+                nutrients.get('fiber')
+            ]
+        }
+        
+        df = pd.DataFrame(data)
+        return df
     except Exception as e:
-        st.error(f"Error transforming nutrient data: {e}")
+        st.error(f"Error creating nutrient DataFrame: {e}")
         return pd.DataFrame()
 
 if ingredients_list and max_selection(ingredients_list):
@@ -137,17 +143,15 @@ if ingredients_list and max_selection(ingredients_list):
             st.write(my_insert_stmt)
             
             # Fetch and format nutrient data for each selected fruit
-            nutrient_data_list = []
             for ingredient in ingredients_list:
                 fruit_data = get_fruit_data(ingredient)
                 if fruit_data:
                     formatted_data = format_nutrient_data(fruit_data)
-                    nutrient_data_list.append(formatted_data)
-
-            # Transform and display nutrient data
-            df_nutrients = transform_nutrient_data(nutrient_data_list)
-            st.write("Nutrient Information for Selected Fruits:")
-            st.dataframe(data=df_nutrients, use_container_width=True)
+                    df_nutrients = create_nutrient_df(formatted_data)
+                    
+                    # Displaying the nutrient information for each fruit
+                    st.write(f"{formatted_data.get('name')} Nutrition Information")
+                    st.dataframe(df_nutrients, use_container_width=True)
 
         except Exception as e:
             st.error(f"Error executing query: {e}")
