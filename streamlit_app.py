@@ -1,5 +1,4 @@
 # Import python packages
-# Import python packages
 import streamlit as st
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
@@ -14,7 +13,7 @@ st.write("Choose the Fruits You want in your Smoothie!")
 name_on_order = st.text_input("Name on Smoothie:")
 st.write("The name on the Smoothie will be:", name_on_order)
 
-# Create a Snowflake session using secrets
+# Create a Snowflake session using Streamlit secrets
 try:
     session = Session.builder.configs({
         "user": st.secrets["Snowflake"]["user"],
@@ -57,15 +56,15 @@ if ingredients_list:
 else:
     st.write("Please select up to 5 ingredients for your smoothie.")
 
-# Function to repeat watermelon data based on the number of ingredients chosen
+# Function to repeat fruit data based on the number of ingredients chosen
 def get_repeated_fruit_data(num_repeats):
     try:
-        # Fetch watermelon data
+        # Fetch data for watermelon or other fruit
         fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
         fruit_data = fruityvice_response.json()
         
         # Repeat the data
-        repeated_data = fruit_data * num_repeats
+        repeated_data = [fruit_data] * num_repeats
         
         # Convert to DataFrame
         df = pd.DataFrame(repeated_data)
@@ -100,6 +99,7 @@ if ingredients_list and max_selection(ingredients_list):
         except Exception as e:
             st.error(f"Error executing query: {e}")
         st.stop()
+
 
 
 
