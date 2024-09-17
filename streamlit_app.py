@@ -1,4 +1,5 @@
 # Import python packages
+# Import python packages
 import streamlit as st
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
@@ -13,11 +14,16 @@ st.write("Choose the Fruits You want in your Smoothie!")
 name_on_order = st.text_input("Name on Smoothie:")
 st.write("The name on the Smoothie will be:", name_on_order)
 
-# Get the Snowflake connection
+# Create a Snowflake session using secrets
 try:
-    cnx = st.connection("Snowflake")
-    # Create a Snowflake session using Streamlit's connection
-    session = cnx.session()
+    session = Session.builder.configs({
+        "user": st.secrets["Snowflake"]["user"],
+        "password": st.secrets["Snowflake"]["password"],
+        "account": st.secrets["Snowflake"]["account"],
+        "warehouse": st.secrets["Snowflake"]["warehouse"],
+        "database": st.secrets["Snowflake"]["database"],
+        "schema": st.secrets["Snowflake"]["schema"]
+    }).create()
 except KeyError as e:
     st.error(f"Connection error: {e}")
     st.stop()
@@ -94,6 +100,7 @@ if ingredients_list and max_selection(ingredients_list):
         except Exception as e:
             st.error(f"Error executing query: {e}")
         st.stop()
+
 
 
 # # Import required packages
