@@ -19,18 +19,33 @@ st.write(st.secrets)
 # Create a Snowflake session using Streamlit secrets
 try:
     snowflake_secrets = st.secrets.get("connections.snowflake", {})
+    st.write("Snowflake secrets loaded:")
+    st.write(snowflake_secrets)
+
+    # Check if all necessary keys are present
+    required_keys = ["account", "user", "password", "role", "warehouse", "database", "schema", "client_session_keep_alive"]
+    for key in required_keys:
+        if key not in snowflake_secrets:
+            st.error(f"Missing secret key: {key}")
+            st.stop()
+
+    # Create Snowflake session
     session = Session.builder.configs({
-        "account": snowflake_secrets.get("account"),
-        "user": snowflake_secrets.get("user"),
-        "password": snowflake_secrets.get("password"),
-        "role": snowflake_secrets.get("role"),
-        "warehouse": snowflake_secrets.get("warehouse"),
-        "database": snowflake_secrets.get("database"),
-        "schema": snowflake_secrets.get("schema"),
+        "account": snowflake_secrets["account"],
+        "user": snowflake_secrets["user"],
+        "password": snowflake_secrets["password"],
+        "role": snowflake_secrets["role"],
+        "warehouse": snowflake_secrets["warehouse"],
+        "database": snowflake_secrets["database"],
+        "schema": snowflake_secrets["schema"],
         "client_session_keep_alive": snowflake_secrets.get("client_session_keep_alive", True)
     }).create()
+    
 except KeyError as e:
     st.error(f"Connection error: {e}")
+    st.stop()
+except AttributeError as e:
+    st.error(f"Attribute error: {e}")
     st.stop()
 except Exception as e:
     st.error(f"Unexpected error: {e}")
