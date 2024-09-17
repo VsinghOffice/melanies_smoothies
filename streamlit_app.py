@@ -18,15 +18,16 @@ st.write(st.secrets)
 
 # Create a Snowflake session using Streamlit secrets
 try:
+    snowflake_secrets = st.secrets.get("connections.snowflake", {})
     session = Session.builder.configs({
-        "account": st.secrets["connections.snowflake"]["account"],
-        "user": st.secrets["connections.snowflake"]["user"],
-        "password": st.secrets["connections.snowflake"]["password"],
-        "role": st.secrets["connections.snowflake"]["role"],
-        "warehouse": st.secrets["connections.snowflake"]["warehouse"],
-        "database": st.secrets["connections.snowflake"]["database"],
-        "schema": st.secrets["connections.snowflake"]["schema"],
-        "client_session_keep_alive": st.secrets["connections.snowflake"].get("client_session_keep_alive", True)
+        "account": snowflake_secrets.get("account"),
+        "user": snowflake_secrets.get("user"),
+        "password": snowflake_secrets.get("password"),
+        "role": snowflake_secrets.get("role"),
+        "warehouse": snowflake_secrets.get("warehouse"),
+        "database": snowflake_secrets.get("database"),
+        "schema": snowflake_secrets.get("schema"),
+        "client_session_keep_alive": snowflake_secrets.get("client_session_keep_alive", True)
     }).create()
 except KeyError as e:
     st.error(f"Connection error: {e}")
@@ -93,6 +94,7 @@ if ingredients_list and max_selection(ingredients_list):
         except Exception as e:
             st.error(f"Error executing query: {e}")
         st.stop()
+
 
 # # Import python packages
 # import streamlit as st
