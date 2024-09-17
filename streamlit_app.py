@@ -160,3 +160,13 @@ if ingredients_list and max_selection(ingredients_list):
         except Exception as e:
             st.error(f"Error executing query: {e}")
         st.stop()
+import hashlib
+
+def hash_ingredients(ingredients):
+    # Hash the ingredients string using SHA256
+    return int(hashlib.sha256(ingredients.encode('utf-8')).hexdigest(), 16)
+
+# Examples of ingredients
+print(hash_ingredients("Apples, Lime, Ximenia"))
+print(hash_ingredients("Dragon Fruit, Guava, Figs, Jackfruit, Blueberries"))
+print(hash_ingredients("Vanilla Fruit, Nectarine"))
