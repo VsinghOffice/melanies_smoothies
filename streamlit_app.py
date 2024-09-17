@@ -76,8 +76,7 @@ def get_fruit_data(fruit_name):
     try:
         response = requests.get(f"https://fruityvice.com/api/fruit/{fruit_name.lower()}")
         if response.status_code == 200:
-            fruit_data = response.json()
-            return fruit_data
+            return response.json()
         else:
             st.error(f"Failed to fetch data for {fruit_name}. Status code: {response.status_code}")
             return {}
@@ -95,7 +94,7 @@ def create_nutrient_df(fruit_data):
         genus = fruit_data.get('genus', 'N/A')
         nutrients = fruit_data.get('nutritions', {})
 
-        # Create DataFrame in the specified format
+        # Create a DataFrame with the specified format
         data = {
             'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
             'Value': [
@@ -109,28 +108,19 @@ def create_nutrient_df(fruit_data):
         }
         df_nutrients = pd.DataFrame(data)
         
-        # Create a DataFrame with the required format
-        df_final = pd.DataFrame({
+        # Create a DataFrame with the fruit information
+        df_fruit_info = pd.DataFrame({
             'Name': [name],
             'ID': [id_],
             'Family': [family],
             'Order': [order],
-            'Genus': [genus],
-            'Calories': [nutrients.get('calories', 'N/A')],
-            'Fat': [nutrients.get('fat', 'N/A')],
-            'Sugar': [nutrients.get('sugar', 'N/A')],
-            'Protein': [nutrients.get('protein', 'N/A')],
-            'Carbohydrates': [nutrients.get('carbohydrates', 'N/A')],
-            'Fiber': [nutrients.get('fiber', 'N/A')]
+            'Genus': [genus]
         })
         
-        # Set proper column order
-        df_final = df_final[['Name', 'ID', 'Family', 'Order', 'Genus', 'Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber']]
-        
-        return df_final
+        return df_fruit_info, df_nutrients
     except Exception as e:
         st.error(f"Error creating nutrient DataFrame: {e}")
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
 if ingredients_list and max_selection(ingredients_list):
     ingredients_string = ' '.join(ingredients_list)
@@ -150,11 +140,18 @@ if ingredients_list and max_selection(ingredients_list):
             for ingredient in ingredients_list:
                 fruit_data = get_fruit_data(ingredient)
                 if fruit_data:
-                    df_nutrients = create_nutrient_df(fruit_data)
+                    df_fruit_info, df_nutrients = create_nutrient_df(fruit_data)
                     
-                    # Displaying the nutrient information for each fruit
+                    # Displaying the fruit information
                     st.write(f"{fruit_data.get('name')} Nutrition Information")
-                    st.dataframe(df_nutrients, use_container_width=True)
+                    
+                    # Display fruit info
+                    st.write("Fruit Information:")
+                    st.dataframe(df_fruit_info, use_container_width=True)
+                    
+                    # Display nutrients
+                    st.write("Nutritional Information:")
+                    st.dataframe(df_nutrients.set_index('Metric').T, use_container_width=True)
 
         except Exception as e:
             st.error(f"Error executing query: {e}")
