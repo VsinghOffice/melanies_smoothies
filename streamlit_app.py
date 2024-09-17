@@ -16,12 +16,14 @@ st.write("The name on the Smoothie will be:", name_on_order)
 # Create a Snowflake session using Streamlit secrets
 try:
     session = Session.builder.configs({
-        "user": st.secrets["Snowflake"]["user"],
-        "password": st.secrets["Snowflake"]["password"],
-        "account": st.secrets["Snowflake"]["account"],
-        "warehouse": st.secrets["Snowflake"]["warehouse"],
-        "database": st.secrets["Snowflake"]["database"],
-        "schema": st.secrets["Snowflake"]["schema"]
+        "account": st.secrets["connections.snowflake"]["account"],
+        "user": st.secrets["connections.snowflake"]["user"],
+        "password": st.secrets["connections.snowflake"]["password"],
+        "role": st.secrets["connections.snowflake"]["role"],
+        "warehouse": st.secrets["connections.snowflake"]["warehouse"],
+        "database": st.secrets["connections.snowflake"]["database"],
+        "schema": st.secrets["connections.snowflake"]["schema"],
+        "client_session_keep_alive": st.secrets["connections.snowflake"].get("client_session_keep_alive", True)
     }).create()
 except KeyError as e:
     st.error(f"Connection error: {e}")
