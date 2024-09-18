@@ -96,33 +96,33 @@ def get_fruit_data(fruit_name):
     except Exception as e:
         return None  # If there's an error, treat it as no data found
 
-# Function to display data as a formatted table
-def create_nutrient_table(fruit_name, fruit_data):
+# Function to create and display the fruit's nutrition table
+def display_fruit_table(fruit_name, fruit_data):
     if fruit_data:
-        nutrients = fruit_data.get('nutritions', {})
-        table_data = {
-            'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
-            'Value': [
-                nutrients.get('calories', 'null'),
-                nutrients.get('fat', 'null'),
-                nutrients.get('sugar', 'null'),
-                nutrients.get('protein', 'null'),
-                nutrients.get('carbohydrates', 'null'),
-                nutrients.get('fiber', 'null')
-            ]
-        }
-        df_nutrients = pd.DataFrame(table_data)
-        df_nutrients.set_index('Metric', inplace=True)
+        st.write(f"**{fruit_name}'s Nutrition Table**")
+
+        st.write(f"Name: {fruit_data.get('name', 'null')}")
+        st.write(f"ID: {fruit_data.get('id', 'null')}")
+        st.write(f"Family: {fruit_data.get('family', 'null')}")
+        st.write(f"Order: {fruit_data.get('order', 'null')}")
+        st.write(f"Genus: {fruit_data.get('genus', 'null')}")
         
-        st.write(f"{fruit_name}'s Nutrition Table")
-        st.dataframe(df_nutrients.T, use_container_width=True)
+        nutrients = fruit_data.get('nutritions', {})
+        st.write(f"Calories: {nutrients.get('calories', 'null')}")
+        st.write(f"Fat: {nutrients.get('fat', 'null')}")
+        st.write(f"Sugar: {nutrients.get('sugar', 'null')}")
+        st.write(f"Protein: {nutrients.get('protein', 'null')}")
+        st.write(f"Carbohydrates: {nutrients.get('carbohydrates', 'null')}")
+        st.write(f"Fiber: {nutrients.get('fiber', 'null')}")
     else:
-        st.write(f"{fruit_name}'s Nutrition Table")
-        st.write("Data not found in API.")
-        st.dataframe(pd.DataFrame({
-            'Metric': ['Calories', 'Fat', 'Sugar', 'Protein', 'Carbohydrates', 'Fiber'],
-            'Value': ['null', 'null', 'null', 'null', 'null', 'null']
-        }).set_index('Metric').T, use_container_width=True)
+        st.write(f"**{fruit_name}'s Nutrition Table**")
+        st.write(f"Data not found for {fruit_name}.")
+        st.write("Calories: null")
+        st.write("Fat: null")
+        st.write("Sugar: null")
+        st.write("Protein: null")
+        st.write("Carbohydrates: null")
+        st.write("Fiber: null")
 
 # Handle form submission
 if ingredients_list:
@@ -140,4 +140,4 @@ if ingredients_list:
         # Fetch and display nutrient data for each selected fruit
         for ingredient in ingredients_list:
             fruit_data = get_fruit_data(ingredient)
-            create_nutrient_table(ingredient, fruit_data)
+            display_fruit_table(ingredient, fruit_data)
