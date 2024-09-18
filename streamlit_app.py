@@ -6,7 +6,7 @@ import pandas as pd
 # Snowflake connection configuration (Replace these values with your actual credentials)
 snowflake_config = {
 
-account = "VAMOAYB-EQ76171"
+account = "VAMOAYB.EQ76171"
 user = "VSINGH"
 password = "Vsingh@17"
 role = "SYSADMIN"
