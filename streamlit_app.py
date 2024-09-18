@@ -32,7 +32,7 @@ if ingredients_list:
             continue
  
         st.subheader(fruit_chosen + 'Nutrition Information')
-        fruityvice_response = requests.get("https://fruityvice.com/api/fruit/"+ fruit_chosen)
+        fruityvice_response = requests.get("https://fruityvice.com/api/fruit/"+ search_on)
         fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
     # SQL insert statement
     my_insert_stmt = f"INSERT INTO smoothies.public.orders (ingredients, name_on_order) VALUES ('{ingredients_string}','{name_on_order}')"
