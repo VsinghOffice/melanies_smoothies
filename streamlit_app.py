@@ -31,26 +31,18 @@ if ingredients_list:
             st.error(f"Search term for {fruit_chosen} is missing.")
             continue
  
-        st.subheader(fruit_chosen + ' Nutrition Information')
-        fruityvice_response = requests.get("https://fruityvice.com/api/fruit/" + search_on)
-        if fruityvice_response.status_code == 200:
-            try:
-                fv_df = pd.json_normalize(fruityvice_response.json())
-                st.dataframe(data=fv_df, use_container_width=True)
-            except Exception as e:
-                st.error(f"Error processing data: {str(e)}")
-        else:
-            st.error(f"Failed to retrieve data for {fruit_chosen}. Status code: {fruityvice_response.status_code}")
- 
+        st.subheader(fruit_chosen + 'Nutrition Information')
+        fruityvice_response = requests.get("https://fruityvice.com/api/fruit/"+ fruit_chosen)
+        fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
     # SQL insert statement
     my_insert_stmt = f"INSERT INTO smoothies.public.orders (ingredients, name_on_order) VALUES ('{ingredients_string}','{name_on_order}')"
     # Button with a unique key to avoid the DuplicateWidgetID issue
     time_to_insert = st.button('Submit Order', key='submit_order')
- 
     # Insert when the button is clicked
     if time_to_insert:
         session.sql(my_insert_stmt).collect()
         st.success('Your Smoothie is ordered!', icon="✅")
+
 
 # import pandas as pd_df
 # import streamlit as st
