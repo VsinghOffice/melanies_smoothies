@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from snowflake.snowpark import Session
@@ -6,8 +5,9 @@ from snowflake.snowpark.functions import col
 import hashlib
 import requests  # Add this to avoid the 'requests not defined' error
 
+# Function to hash ingredients using Python's hash method (to align with DORA)
 def hash_ingredients(ingredients):
-    return int(hashlib.sha256(ingredients.encode('utf-8')).hexdigest(), 16)
+    return hash(ingredients)  # Python's built-in hash function
 
 # Streamlit App title
 st.title("My Parents New Healthy Diner")
@@ -58,6 +58,7 @@ if ingredients_list:
 else:
     st.write("Please select up to 5 ingredients for your smoothie.")
 
+# Function to fetch data from the external API
 def get_fruit_data(fruit_name):
     try:
         response = requests.get(f"https://fruityvice.com/api/fruit/{fruit_name.lower()}")
@@ -70,6 +71,7 @@ def get_fruit_data(fruit_name):
         st.error(f"Error fetching or processing fruit data: {e}")
         return {}
 
+# Function to create nutrient DataFrame
 def create_nutrient_df(fruit_data):
     try:
         name = fruit_data.get('name', 'Unknown')
@@ -105,10 +107,13 @@ def create_nutrient_df(fruit_data):
         st.error(f"Error creating nutrient DataFrame: {e}")
         return pd.DataFrame(), pd.DataFrame()
 
+# Handle form submission
 if ingredients_list and max_selection(ingredients_list):
     ingredients_string = ' '.join(ingredients_list)
-    my_insert_stmt = f"""INSERT INTO smoothies.public.orders(name_on_order, ingredients)
-                         VALUES ('{name_on_order}', '{ingredients_string}')"""
+    hashed_ingredients = hash_ingredients(ingredients_string)  # Hash the ingredients
+
+    my_insert_stmt = f"""INSERT INTO smoothies.public.orders(name_on_order, ingredients, hash_ing)
+                         VALUES ('{name_on_order}', '{ingredients_string}', {hashed_ingredients})"""
 
     submitted = st.button('Submit Order')
     
