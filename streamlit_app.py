@@ -1,77 +1,44 @@
 import streamlit as st
-
-from snowflake.snowpark.context import get_active_session
-
-from snowflake.snowpark.functions import col, when_matched
-
-import pandas as pd
+import requests
+from snowflake.snowpark.functions import col
  
-# Title of the app
-
-st.title(":cup_with_straw: Pending Smoothie Orders :cup_with_straw:")
-
-st.write("""Orders that need to be filled.""")
+# Write directly to the app
+st.title("My Parents New Healthy Diner")
+st.write(
+    """Choose the fruits you want in your custom Smoothie!.
+    """
+)
  
-# Get the Snowflake session
-
-session = get_active_session()
+name_on_order = st.text_input('Name on smoothie:')
+st.write('The name on your Smoothie will be:', name_on_order)
  
-# Fetch data for unfilled orders (ORDER_FILLED = FALSE)
-
-my_dataframe = session.table("smoothies.public.orders").filter(col("ORDER_FILLED") == False).select(col('NAME_ON_ORDER'), col('INGREDIENTS')).to_pandas()
+# Get session and fetch data
+cnx = st.connection("snowflake")
+session = cnx.session()
+my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'))
  
-if not my_dataframe.empty:
-
-    # Add a checkbox column within the table for users to mark orders as fulfilled
-
-    my_dataframe['ORDER_FILLED'] = my_dataframe['NAME_ON_ORDER'].apply(
-
-        lambda name: st.checkbox(f"Fulfilled", key=name)
-
-    )
+# Ingredient selection
+ingredients_list = st.multiselect("Choose up to 5 ingredients:", my_dataframe, max_selections = 5)
  
-    # Display the DataFrame in the editor with checkboxes
-
-    editable_df = st.experimental_data_editor(my_dataframe)
+if ingredients_list:
+    ingredients_string = ' '.join(ingredients_list)
+    st.write("Your selected ingredients:", ingredients_string)
  
-    # Add a submit button
-
-    if st.button('Submit'):
-
-        st.success("Submit button clicked.", icon="👍")
-
-        # Convert the edited DataFrame to Snowpark DataFrame
-
-        edited_dataset = session.create_dataframe(editable_df)
+    for fruit_chosen in ingredients_list:
+        ingredients_string += fruit_chosen + ''
+        st.subheader(fruit_chosen + 'Nutrition Information')
+        fruityvice_response = requests.get("https://fruityvice.com/api/fruit/" + fruit_chosen)
+        fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
  
-        # Create the original dataset
-
-        original_dataset = session.table("smoothies.public.orders")
+    # SQL insert statement
+    my_insert_stmt = f"INSERT INTO smoothies.public.orders (ingredients, name_on_order) VALUES ('{ingredients_string}','{name_on_order}')"
+    # Button with a unique key to avoid the DuplicateWidgetID issue
+    time_to_insert = st.button('Submit Order', key='submit_order')
  
-        try:
-
-            # Perform the merge operation
-
-            original_dataset.merge(
-
-                edited_dataset,
-
-                (original_dataset['NAME_ON_ORDER'] == edited_dataset['NAME_ON_ORDER']),
-
-                [when_matched().update({'ORDER_FILLED': edited_dataset['ORDER_FILLED']})]
-
-            ).collect()  # Execute the merge operation
-
-            st.success("Order(s) Updated!", icon="👍")
-
-        except Exception as e:
-
-            st.write(f'Something went wrong: {e}')
-
-else:
-
-    st.write('There are no pending orders right now.')
-
+    # Insert when the button is clicked
+    if time_to_insert:
+        session.sql(my_insert_stmt).collect()
+        st.success('Your Smoothie is ordered!', icon="✅")
  
 
  
