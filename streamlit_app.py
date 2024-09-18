@@ -18,6 +18,11 @@ session = cnx.session()
 # Fetch available fruits and their corresponding SEARCH_ON values
 my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'), col('SEARCH_ON')).to_pandas()
 
+
+# Modify the status to 'FILLED' for the orders you need to mark as filled
+# This would need to be managed separately or added as a feature to your Streamlit app if necessary.
+
+
 # Create a pd_df DataFrame from my_dataframe
 pd_df = pd.DataFrame(my_dataframe)
 
@@ -53,7 +58,7 @@ if ingredients_list:
             st.write(f"Error fetching data for {fruit_chosen}: {e}")
 
     # SQL insert statement
-    my_insert_stmt = f"INSERT INTO smoothies.public.orders (ingredients, name_on_order) VALUES ('{ingredients_string}', '{name_on_order}')"
+    my_insert_stmt = f"INSERT INTO smoothies.public.orders (ingredients, name_on_order, status) VALUES ('{ingredients_string}', '{name_on_order}', 'UNFILLED')"
 
     # Button with a unique key to avoid the DuplicateWidgetID issue
     time_to_insert = st.button('Submit Order', key='submit_order')
