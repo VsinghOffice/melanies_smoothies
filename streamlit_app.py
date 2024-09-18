@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd_df
 import streamlit as st
 import requests
 from snowflake.snowpark.functions import col
@@ -17,7 +17,7 @@ st.write('The name on your Smoothie will be:', name_on_order)
 cnx = st.connection("snowflake")
 session = cnx.session()
 my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'))
-pd=my_dataframe.to_pandas()
+pd_df=my_dataframe.to_pandas()
 # st.dataframe(pd)
 # st.stop()
 # Ingredient selection
