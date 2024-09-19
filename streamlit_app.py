@@ -43,53 +43,140 @@
 #         session.sql(my_insert_stmt).collect()
 #         st.success('Your Smoothie is ordered!', icon="✅")
 
+# import streamlit as st
+# from snowflake.snowpark.context import get_active_session
+# from snowflake.snowpark.functions import col, when_matched
+# import pandas as pd
+ 
+# # Title of the app
+# st.title(":cup_with_straw: Pending Smoothie Orders :cup_with_straw:")
+# st.write("""Orders that need to be filled.""")
+ 
+# # Get the Snowflake session
+# session = get_active_session()
+ 
+# # Fetch data for unfilled orders (ORDER_FILLED = FALSE)
+# my_dataframe = session.table("smoothies.public.orders").filter(col("ORDER_FILLED") == False).select(col('NAME_ON_ORDER'), col('INGREDIENTS')).to_pandas()
+ 
+# # Create a new column for checkboxes to fulfill orders
+# my_dataframe["Fulfilled"] = False  # Add a column for checkboxes with a default value of False
+ 
+# # Display the dataframe with checkboxes in the 'Fulfilled' column
+# for index, row in my_dataframe.iterrows():
+#     fulfilled = st.checkbox(f"Fulfill Order for {row['NAME_ON_ORDER']}", key=index)
+#     my_dataframe.at[index, "Fulfilled"] = fulfilled  # Update the dataframe based on checkbox input
+ 
+# # Add a submit button
+# if st.button('Submit'):
+#     st.success("Submit button clicked.", icon="👍")
+#     # Filter the orders that are fulfilled
+#     fulfilled_orders = my_dataframe[my_dataframe['Fulfilled'] == True]
+#     if not fulfilled_orders.empty:
+#         # Convert the filtered DataFrame to Snowpark DataFrame for the fulfilled orders
+#         fulfilled_snowpark_df = session.create_dataframe(fulfilled_orders[['NAME_ON_ORDER']])
+ 
+#         # Create the original dataset
+#         original_dataset = session.table("smoothies.public.orders")
+ 
+#         try:
+#             # Perform the merge operation to update the ORDER_FILLED status
+#             original_dataset.merge(
+#                 fulfilled_snowpark_df,
+#                 (original_dataset['NAME_ON_ORDER'] == fulfilled_snowpark_df['NAME_ON_ORDER']),
+#                 [when_matched().update({'ORDER_FILLED': True})]
+#             )._internal_object()  # Trigger the execution of the merge operation
+#             st.success("Order(s) Updated!", icon="👍")
+#         except Exception as e:
+#             st.write(f'Something went wrong: {e}')
+#     else:
+#         st.warning("No orders were selected for fulfillment.")
+ 
+# # Display the dataframe for reference (without checkboxes)
+# st.dataframe(my_dataframe[['NAME_ON_ORDER', 'INGREDIENTS']])
+
+
+# Import python packages
+
 import streamlit as st
+
 from snowflake.snowpark.context import get_active_session
-from snowflake.snowpark.functions import col, when_matched
-import pandas as pd
+
+from snowflake.snowpark.functions import col
  
-# Title of the app
-st.title(":cup_with_straw: Pending Smoothie Orders :cup_with_straw:")
-st.write("""Orders that need to be filled.""")
+# Write directly to the app
+
+st.title(" :cup_with_straw: Customise with smoothies:cup_with_straw:")
+
+st.write(
+
+    """
+
+    """
+
+)
  
-# Get the Snowflake session
+name_on_order = st.text_input("Name on smoothie")
+
+st.write("The name on the smoothie will be ", name_on_order)
+ 
 session = get_active_session()
+
+my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'))
+
+st.dataframe(data=my_dataframe, use_container_width=True)
  
-# Fetch data for unfilled orders (ORDER_FILLED = FALSE)
-my_dataframe = session.table("smoothies.public.orders").filter(col("ORDER_FILLED") == False).select(col('NAME_ON_ORDER'), col('INGREDIENTS')).to_pandas()
+ingredients_list = st.multiselect(
+
+'Choose up to 5 ingredients;'
+
+, my_dataframe
+
+)
  
-# Create a new column for checkboxes to fulfill orders
-my_dataframe["Fulfilled"] = False  # Add a column for checkboxes with a default value of False
+if ingredients_list:
+
+     ingredients_string = ''
  
-# Display the dataframe with checkboxes in the 'Fulfilled' column
-for index, row in my_dataframe.iterrows():
-    fulfilled = st.checkbox(f"Fulfill Order for {row['NAME_ON_ORDER']}", key=index)
-    my_dataframe.at[index, "Fulfilled"] = fulfilled  # Update the dataframe based on checkbox input
+     for fruit_chosen in ingredients_list:
+
+         ingredients_string += fruit_chosen + ''
  
-# Add a submit button
-if st.button('Submit'):
-    st.success("Submit button clicked.", icon="👍")
-    # Filter the orders that are fulfilled
-    fulfilled_orders = my_dataframe[my_dataframe['Fulfilled'] == True]
-    if not fulfilled_orders.empty:
-        # Convert the filtered DataFrame to Snowpark DataFrame for the fulfilled orders
-        fulfilled_snowpark_df = session.create_dataframe(fulfilled_orders[['NAME_ON_ORDER']])
+     #st.write(ingredients_string)
+
+     time_to_insert = st.button('Submit Order')
  
-        # Create the original dataset
-        original_dataset = session.table("smoothies.public.orders")
+     my_insert_stmt = """ insert into smoothies.public.orders(ingredients)
+
+            values ('""" + ingredients_string + """','"""+name_on_order+"""')"""
  
-        try:
-            # Perform the merge operation to update the ORDER_FILLED status
-            original_dataset.merge(
-                fulfilled_snowpark_df,
-                (original_dataset['NAME_ON_ORDER'] == fulfilled_snowpark_df['NAME_ON_ORDER']),
-                [when_matched().update({'ORDER_FILLED': True})]
-            )._internal_object()  # Trigger the execution of the merge operation
-            st.success("Order(s) Updated!", icon="👍")
-        except Exception as e:
-            st.write(f'Something went wrong: {e}')
-    else:
-        st.warning("No orders were selected for fulfillment.")
+     st.write(my_insert_stmt)
+
+     st.stop()
  
-# Display the dataframe for reference (without checkboxes)
-st.dataframe(my_dataframe[['NAME_ON_ORDER', 'INGREDIENTS']])
+     if time_to_insert:
+
+        session.sql(my_insert_stmt).collect()
+
+        st.success('Your Smoothie is ordered!', icon="✅")
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
